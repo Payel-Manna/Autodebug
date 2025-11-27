@@ -52,9 +52,7 @@ def parse_traceback(stderr: str):
 
     # --------------------------------------------------------------------
     # 2. Extract file + line number from traceback
-    #    Works for nested calls too.
     # --------------------------------------------------------------------
-    # Example: File "script.py", line 4, in <module>
     file_info_pattern = r'File "(.+?)", line (\d+)(?:, in .*)?'
     file_match = re.findall(file_info_pattern, stderr)
 
@@ -62,33 +60,26 @@ def parse_traceback(stderr: str):
     line_number = None
 
     if file_match:
-        # last call is the one that errored
         file_path, line_number = file_match[-1]
         line_number = int(line_number)
 
     # --------------------------------------------------------------------
-    # 3. Extract column offset (only SyntaxError and a few others)
-    #    Example:
-    #        print(1+)
-    #               ^
+    # 3. Extract column offset (only SyntaxError and similar)
     # --------------------------------------------------------------------
     column = None
     caret_index = None
 
     for i in range(len(lines) - 1):
         if lines[i].strip().startswith("File "):
-            # caret is usually 2 lines after file line
             if i + 3 < len(lines) and lines[i+3].strip().startswith("^"):
                 caret_index = lines[i+3].index("^")
                 column = caret_index + 1  # 1-based indexing
 
     # --------------------------------------------------------------------
-    # 4. Extract code line (the line of code that errored)
+    # 4. Extract code line that triggered error
     # --------------------------------------------------------------------
     code_line = None
 
-    # Look for the Python-traceback pattern:
-    # File "...", line X
     for i in range(len(lines) - 1):
         if lines[i].strip().startswith("File "):
             if i + 1 < len(lines):

@@ -4,8 +4,8 @@ from .executor import run_code_safely
 def run_and_capture(code: str):
     """Write user code to a temp file and execute it safely."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode="w") as f:
-        f.write(code)
-        f.flush()
+        f.write(code)  # For write permission
+        f.flush() # Force changes before subprocess
         file_path = f.name
 
     result = run_code_safely(file_path)
