@@ -1,27 +1,11 @@
-import ast
+def fix_var_misuse(source, issue):
+    """
+    Fix unassigned variable by inserting initialization above the line.
+    """
+    var = issue["message"].split("'")[1]  # extract variable name
+    lines = source.split("\n")
+    ln = issue["line"] - 1
 
-def detect_var_misuse(tree, source: str):
-    issues = []
-    assigned = set()
+    lines.insert(ln, f"{var} = None  # auto-init fix")
 
-    class Visitor(ast.NodeVisitor):
-        def visit_Assign(self, node):
-            for target in node.targets:
-                if isinstance(target, ast.Name):
-                    assigned.add(target.id)
-            self.generic_visit(node)
-
-        def visit_Name(self, node):
-            if isinstance(node.ctx, ast.Load):
-                if node.id not in assigned and node.id not in ("True", "False", "None"):
-                    issues.append({
-                        "rule": "var_misuse",
-                        "line": node.lineno,
-                        "col": node.col_offset,
-                        "message": f"Variable '{node.id}' used before assignment.",
-                        "suggestion": "Initialize variable before using it."
-                    })
-            self.generic_visit(node)
-
-    Visitor().visit(tree)
-    return issues
+    return "\n".join(lines)
